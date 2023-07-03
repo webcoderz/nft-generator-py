@@ -51,7 +51,7 @@ class Generator:
         self.nonce = 0
         self.all_genomes = []
 
-    def __tomlify(self) -> str:
+    def tomlify(self) -> str:
         """
         Converts a dictionary to TOML format.
         """
@@ -67,12 +67,12 @@ class Generator:
         for key, value in obj.items():
             if isinstance(value, dict):
                 toml += "[{}]\n".format(key)
-                toml += self.__tomlify(value)
+                toml += self.tomlify(value)
             else:
                 toml += "{} = {}\n".format(key, value)
         return toml
 
-    def __build_genome_metadata(self, token_id: int = 0):
+    def build_genome_metadata(self, token_id: int = 0):
         """
         Builds the generation / NFT metadata for a single NFT.
         """
@@ -98,10 +98,10 @@ class Generator:
                     if "default" in incompatibility:
                         genome_traits[trait] = incompatibility["default"]["value"]
                     else:
-                        return self.__build_genome_metadata(token_id)
+                        return self.build_genome_metadata(token_id)
 
         if genome_traits in self.all_genomes and not self.allow_duplicates:
-            return self.__build_genome_metadata(token_id)
+            return self.build_genome_metadata(token_id)
         else:
             self.all_genomes.append(
                 {
@@ -118,7 +118,9 @@ class Generator:
                     ],
                 }
             )
+            return genome_traits
 
+            
     def __build_genome_image(self, metadata: dict):
         """
         Builds the NFT image for a single NFT.
@@ -172,7 +174,7 @@ class Generator:
         with get_progress_bar(self.amount) as bar:
             for i in range(self.amount):
                 token_id = self.start_at + i
-                self.__build_genome_metadata(token_id)
+                self.build_genome_metadata(token_id)
                 write_json(
                     "{}/metadata/{}.json".format(self.output, token_id),
                     self.all_genomes[-1],
@@ -188,7 +190,7 @@ class Generator:
                 "{}/.generatorrc".format(
                     self.output,
                 ),
-                self.__tomlify(),
+                self.tomlify(),
             )
 
         self.logger.info("Generating layered images for %d NFTs", self.amount)
