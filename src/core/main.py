@@ -17,10 +17,13 @@ class Generator:
         self.logger = get_logger(args["verbose"])
 
         if args["command"] in ["generate", "validate"]:
+
             if not args["config"]:
                 raise ValueError("No configuration file was provided.")
-            elif not args["config"].endswith(".json"):
-                raise ValueError("Invalid configuration file '{}'".format(args["config"]))
+            elif isinstance(args["config"], str):
+                self.config = read_json(args["config"])
+            elif isinstance(args["config"], dict):
+                self.config = args["config"]
 
             if not args["amount"]:
                 raise ValueError("No amount was provided.")
@@ -30,9 +33,7 @@ class Generator:
             self.no_pad = args["no_pad"]
             self.pad_amount = 0 if self.no_pad else len(str(self.amount))
 
-            # read configuration and validate it
-            self.logger.debug("Loading configuration from '%s'", args["config"])
-            self.config = read_json(args["config"])
+            # validate config
             self.logger.debug("Validating configuration")
             validate_config(self.config)
 
@@ -150,6 +151,7 @@ class Generator:
 
         # create folder structure if it doesn't exist
         rgb_im.save("{}/images/{}.png".format(self.output, metadata["token_id"]))
+
 
     def generate(self):
         """
